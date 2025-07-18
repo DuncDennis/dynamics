@@ -7,7 +7,8 @@ let sliderSpeed = 0.6;
 let initialState = [Math.PI / 2, Math.PI / 3.8, 0, 0]; // Initial conditions [a1(0), a2(0), w1(0), w2(0)]
 let state = [...initialState]; // Copy of initial state for reset
 let trace = []; // Array to store the positions for the trace
-
+const UI_OFFSET_X = 60;  // push everything right
+const UI_OFFSET_Y = 20;  // push everything down
 // Sliders
 let l1Slider, l2Slider, m1Slider, m2Slider;
 let resetButton;
@@ -15,26 +16,55 @@ let resetButton;
 // Keys
 let keysDown = new Set();
 
+function addKeyIndicator(slider, keysText, dx = -55, dy=3) {
+  const tag = document.createElement('span');
+  tag.className = 'key-indicator';
+  tag.textContent = keysText;
+  document.body.appendChild(tag);
+
+  // Position once (after layout) and when window resizes
+  function place() {
+    // p5's createSlider gives us .x and .y (numbers) AND slider.position()
+    const x = slider.x; // left
+    const y = slider.y; // top
+    // Center vertically relative to the slider's height (which may vary by browser)
+    const h = slider.elt.offsetHeight || 16;
+    tag.style.left = (x + dx) + 'px';
+    tag.style.top  = (y + dy + h / 2 - tag.offsetHeight / 2) + 'px';
+  }
+
+  // Initial placement after current call stack so sizes exist
+  requestAnimationFrame(place);
+  window.addEventListener('resize', place);
+
+  // Store a reference in case you want to update later
+  slider._keyIndicator = { el: tag, place };
+}
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   textFont('monospace');
   
   // Create sliders
-  l1Slider = createSlider(1, 300, 150, 0.1); // Length of the first pendulum
-  l1Slider.position(20, 20);
-  
-  l2Slider = createSlider(1, 300, 150, 0.1); // Length of the second pendulum
-  l2Slider.position(20, 50);
-  
-  m1Slider = createSlider(1, 20, 10, 0.01); // Mass of the first pendulum
-  m1Slider.position(20, 80);
-  
-  m2Slider = createSlider(1, 20, 10, 0.01); // Mass of the second pendulum
-  m2Slider.position(20, 110);
+  l1Slider = createSlider(1, 300, 150, 0.1);
+  l1Slider.position(UI_OFFSET_X + 20, UI_OFFSET_Y + 20);
+  addKeyIndicator(l1Slider, 'q / w');
+
+  l2Slider = createSlider(1, 300, 150, 0.1);
+  l2Slider.position(UI_OFFSET_X + 20, UI_OFFSET_Y + 50);
+  addKeyIndicator(l2Slider, 'e / r');
+
+  m1Slider = createSlider(1, 20, 10, 0.01);
+  m1Slider.position(UI_OFFSET_X + 20, UI_OFFSET_Y + 80);
+  addKeyIndicator(m1Slider, 'a / s');
+
+  m2Slider = createSlider(1, 20, 10, 0.01);
+  m2Slider.position(UI_OFFSET_X + 20, UI_OFFSET_Y + 110);
+  addKeyIndicator(m2Slider, 'd / f');
 
   // Create reset button
   resetButton = createButton('Reset');
-  resetButton.position(20, 140);
+  resetButton.position(UI_OFFSET_X + -35, UI_OFFSET_Y + 120);  
   resetButton.mousePressed(resetSimulation); // Attach event listener
 
   styleControls(); 
@@ -65,15 +95,16 @@ function draw() {
   textStyle(NORMAL);  // Set font weight to normal (not bold)
   // Labels
   const labelX = l1Slider.x * 2 + l1Slider.width;
+  const labelY = l1Slider.y - 7;
   let l1Str = (l1).toFixed(1);
   let l2Str = (l2).toFixed(1);
   let m1Str = (m1).toFixed(1);
   let m2Str = (m2).toFixed(1);
   
-  text(`L₁: ${l1Str}`, labelX + 60, 35);
-  text(`L₂: ${l2Str}`, labelX + 60, 65);
-  text(`M₁: ${m1Str}`, labelX + 60, 95);
-  text(`M₂: ${m2Str}`, labelX + 60, 125);
+  text(`L₁: ${l1Str}`, labelX + -10, labelY + 20);
+  text(`L₂: ${l2Str}`, labelX + -10, labelY + 50);
+  text(`M₁: ${m1Str}`, labelX + -10, labelY + 80);
+  text(`M₂: ${m2Str}`, labelX + -10, labelY + 110);
   
   // Midpoint of coordinate system
   translateX = width / 2;
@@ -182,7 +213,7 @@ function keyReleased() {
 }
 
 function styleControls() {
-  if (document.getElementById('pendulum-style')) return; // run once
+  if (document.getElementById('pendulum-style')) return;
   const styleEl = document.createElement('style');
   styleEl.id = 'pendulum-style';
   styleEl.textContent = `
@@ -207,10 +238,10 @@ function styleControls() {
     }
     .nice-range:hover::-webkit-slider-thumb {
       transform: scale(1.12);
-      box-shadow: 0 0 0 2px #c5ccd6, 0 3px 6px rgba(0,0,0,0.35);
+      box-shadow:0 0 0 2px #c5ccd6, 0 3px 6px rgba(0,0,0,0.35);
     }
     .nice-btn {
-      font-family: "JetBrains Mono", "Fira Code", "Source Code Pro", "Courier New", monospace;
+      font-family: "JetBrains Mono","Fira Code","Source Code Pro","Courier New",monospace;
       padding: 6px 18px;
       border: none;
       border-radius: 6px;
@@ -221,7 +252,7 @@ function styleControls() {
       box-shadow:0 2px 5px rgba(0,0,0,0.25);
       transition: transform .15s, box-shadow .15s;
       display: block;
-      margin: 14px auto 0; /* centers button */
+      margin: 14px auto 0;
     }
     .nice-btn:hover {
       transform: translateY(-2px);
@@ -231,10 +262,37 @@ function styleControls() {
       transform: translateY(0);
       box-shadow:0 2px 5px rgba(0,0,0,0.25);
     }
+    .key-indicator {
+      position: absolute;
+      left: -50px;
+      padding: 2px 6px;
+      font-size: 11px;
+      line-height: 1;
+      font-family: "JetBrains Mono","Fira Code","Source Code Pro","Courier New",monospace;
+      background: #222;
+      color: #fff;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+      opacity: 0.85;
+      user-select: none;
+      pointer-events: none;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+    .key-indicator::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -4px;
+      transform: translateY(-50%);
+      width: 0; height: 0;
+      border-left: 4px solid #222;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
   `;
   document.head.appendChild(styleEl);
 
-  // Attach classes + colors
   l1Slider.elt.classList.add('nice-range');
   l2Slider.elt.classList.add('nice-range');
   m1Slider.elt.classList.add('nice-range');
