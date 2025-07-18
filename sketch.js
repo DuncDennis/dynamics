@@ -3,6 +3,7 @@ let l1, l2; // Lengths of the pendulums
 let m1, m2; // Masses of the pendulums
 let t = 0;
 let h = 0.5;
+let sliderSpeed = 0.6;
 let initialState = [Math.PI / 2, Math.PI / 3.8, 0, 0]; // Initial conditions [a1(0), a2(0), w1(0), w2(0)]
 let state = [...initialState]; // Copy of initial state for reset
 let trace = []; // Array to store the positions for the trace
@@ -11,19 +12,24 @@ let trace = []; // Array to store the positions for the trace
 let l1Slider, l2Slider, m1Slider, m2Slider;
 let resetButton;
 
+// Keys
+let keysDown = new Set();
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  textFont('monospace');
+  
   // Create sliders
-  l1Slider = createSlider(1, 300, 150); // Length of the first pendulum
+  l1Slider = createSlider(1, 300, 150, 0.1); // Length of the first pendulum
   l1Slider.position(20, 20);
   
-  l2Slider = createSlider(1, 300, 150); // Length of the second pendulum
+  l2Slider = createSlider(1, 300, 150, 0.1); // Length of the second pendulum
   l2Slider.position(20, 50);
   
-  m1Slider = createSlider(1, 20, 10); // Mass of the first pendulum
+  m1Slider = createSlider(1, 20, 10, 0.01); // Mass of the first pendulum
   m1Slider.position(20, 80);
   
-  m2Slider = createSlider(1, 20, 10); // Mass of the second pendulum
+  m2Slider = createSlider(1, 20, 10, 0.01); // Mass of the second pendulum
   m2Slider.position(20, 110);
 
   // Create reset button
@@ -34,7 +40,18 @@ function setup() {
 
 function draw() {
   background(255);
-
+  // --- Continuous slider updates based on held keys (percentage + speed) ---
+  if (keysDown.size > 0) {
+    const dt = deltaTime; // milliseconds since last frame
+    if (keysDown.has('q') || keysDown.has('Q')) adjustSlider(l1Slider, -1, dt);
+    if (keysDown.has('w') || keysDown.has('W')) adjustSlider(l1Slider,  1, dt);
+    if (keysDown.has('e') || keysDown.has('E')) adjustSlider(l2Slider, -1, dt);
+    if (keysDown.has('r') || keysDown.has('R')) adjustSlider(l2Slider,  1, dt);
+    if (keysDown.has('a') || keysDown.has('A')) adjustSlider(m1Slider, -1, dt);
+    if (keysDown.has('s') || keysDown.has('S')) adjustSlider(m1Slider,  1, dt);
+    if (keysDown.has('d') || keysDown.has('D')) adjustSlider(m2Slider, -1, dt);
+    if (keysDown.has('f') || keysDown.has('F')) adjustSlider(m2Slider,  1, dt);
+  }
   // Update the values from sliders
   l1 = l1Slider.value();
   l2 = l2Slider.value();
@@ -44,11 +61,18 @@ function draw() {
   fill(0);
   textSize(20);
   textStyle(NORMAL);  // Set font weight to normal (not bold)
-  text(`Length of Pendulum 1: ${l1}`, l1Slider.x * 2 + l1Slider.width, 35);
-  text(`Length of Pendulum 2: ${l2}`, l2Slider.x * 2 + l2Slider.width, 65);
-  text(`Mass of Pendulum 1: ${m1}`, m1Slider.x * 2 + m1Slider.width, 95);
-  text(`Mass of Pendulum 2: ${m2}`, m2Slider.x * 2 + m2Slider.width, 125);
-
+  // Labels
+  const labelX = l1Slider.x * 2 + l1Slider.width;
+  let l1Str = (l1).toFixed(1);
+  let l2Str = (l2).toFixed(1);
+  let m1Str = (m1).toFixed(1);
+  let m2Str = (m2).toFixed(1);
+  
+  text(`L₁: ${l1Str}`, labelX, 35);
+  text(`L₂: ${l2Str}`, labelX, 65);
+  text(`M₁: ${m1Str}`, labelX, 95);
+  text(`M₂: ${m2Str}`, labelX, 125);
+  
   // Midpoint of coordinate system
   translateX = width / 2;
   translateY = height / 2;
@@ -130,4 +154,27 @@ function resetSimulation() {
   l2Slider.value(150); // Reset slider for length of the second pendulum
   m1Slider.value(10);  // Reset slider for mass of the first pendulum
   m2Slider.value(10);  // Reset slider for mass of the second pendulum
+}
+
+function adjustSlider(slider, direction, dt) {
+  // direction = +1 or -1
+  let minVal = Number(slider.elt.min);
+  let maxVal = Number(slider.elt.max);
+  let range = maxVal - minVal;
+
+  // dt is deltaTime in ms; convert to seconds
+  let step = range * sliderSpeed * (dt / 1000); 
+  let newVal = slider.value() + direction * step;
+  newVal = constrain(newVal, minVal, maxVal);
+  slider.value(newVal);
+}
+
+function keyPressed() {
+  keysDown.add(key);
+  return false;
+}
+
+function keyReleased() {
+  keysDown.delete(key);
+  return false;
 }
