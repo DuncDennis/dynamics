@@ -36,6 +36,8 @@ function setup() {
   resetButton = createButton('Reset');
   resetButton.position(20, 140);
   resetButton.mousePressed(resetSimulation); // Attach event listener
+
+  styleControls(); 
 }
 
 function draw() {
@@ -68,10 +70,10 @@ function draw() {
   let m1Str = (m1).toFixed(1);
   let m2Str = (m2).toFixed(1);
   
-  text(`L₁: ${l1Str}`, labelX, 35);
-  text(`L₂: ${l2Str}`, labelX, 65);
-  text(`M₁: ${m1Str}`, labelX, 95);
-  text(`M₂: ${m2Str}`, labelX, 125);
+  text(`L₁: ${l1Str}`, labelX + 60, 35);
+  text(`L₂: ${l2Str}`, labelX + 60, 65);
+  text(`M₁: ${m1Str}`, labelX + 60, 95);
+  text(`M₂: ${m2Str}`, labelX + 60, 125);
   
   // Midpoint of coordinate system
   translateX = width / 2;
@@ -177,4 +179,70 @@ function keyPressed() {
 function keyReleased() {
   keysDown.delete(key);
   return false;
+}
+
+function styleControls() {
+  if (document.getElementById('pendulum-style')) return; // run once
+  const styleEl = document.createElement('style');
+  styleEl.id = 'pendulum-style';
+  styleEl.textContent = `
+    .nice-range {
+      -webkit-appearance: none;
+      width: 180px;
+      height: 6px;
+      border-radius: 3px;
+      background: #e3e8f0;
+      outline: none;
+      margin: 4px 0;
+    }
+    .nice-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--thumb-color,#555);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px #b6bdc8, 0 2px 4px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .nice-range:hover::-webkit-slider-thumb {
+      transform: scale(1.12);
+      box-shadow: 0 0 0 2px #c5ccd6, 0 3px 6px rgba(0,0,0,0.35);
+    }
+    .nice-btn {
+      font-family: "JetBrains Mono", "Fira Code", "Source Code Pro", "Courier New", monospace;
+      padding: 6px 18px;
+      border: none;
+      border-radius: 6px;
+      background: linear-gradient(135deg,#6c91ff,#3558e6);
+      color:#fff;
+      font-size:14px;
+      cursor:pointer;
+      box-shadow:0 2px 5px rgba(0,0,0,0.25);
+      transition: transform .15s, box-shadow .15s;
+      display: block;
+      margin: 14px auto 0; /* centers button */
+    }
+    .nice-btn:hover {
+      transform: translateY(-2px);
+      box-shadow:0 4px 10px rgba(0,0,0,0.35);
+    }
+    .nice-btn:active {
+      transform: translateY(0);
+      box-shadow:0 2px 5px rgba(0,0,0,0.25);
+    }
+  `;
+  document.head.appendChild(styleEl);
+
+  // Attach classes + colors
+  l1Slider.elt.classList.add('nice-range');
+  l2Slider.elt.classList.add('nice-range');
+  m1Slider.elt.classList.add('nice-range');
+  m2Slider.elt.classList.add('nice-range');
+  resetButton.elt.classList.add('nice-btn');
+
+  l1Slider.elt.style.setProperty('--thumb-color', '#ff6b4a');
+  l2Slider.elt.style.setProperty('--thumb-color', '#f6b500');
+  m1Slider.elt.style.setProperty('--thumb-color', '#37b679');
+  m2Slider.elt.style.setProperty('--thumb-color', '#6c91ff');
 }
